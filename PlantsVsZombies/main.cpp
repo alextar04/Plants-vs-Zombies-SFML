@@ -1,723 +1,37 @@
 #include <SFML/Graphics.hpp>
 #include <ctime>
+#include "Classes.h"
 using namespace sf;
 using namespace std;
 
-//Изображение растения на карте
-class FlowerImage {
-public:
-	//Изображение растения (ссылка)
-	string currentPicture;
-	//Cнаряды (ссылка на картинку)
-	string weapon;
-	int posWeaponX;
-	int posWeaponY;
-	//Вызывающее действие
-	string doing;
-	//Скорость полета оружия
-	double dx;
-	//Перерисовывается (состояние)
-	bool reprinting = false;
-	//Модель растения
-	virtual void setModel() = 0;
-	//Позиция вылета снаряда
-	virtual void weaponFrom() = 0;
-	//Скорость полета снаряда
-	virtual void setSpeedDx(double) = 0;
-	//Установка вызывающего действия
-	virtual void setDoing() = 0;
-	//Обновление изображения пули
-	virtual void updateBullet(RenderWindow& window, double time) = 0;
-};
-
-
-//Обработка для Подсолнуха
-class SunflowerImage : public FlowerImage {
-	void setDoing() {
-		doing = "Кушать";
-	}
-	void weaponFrom() {};
-	void setSpeedDx(double a) {
-		dx = a;
-	}
-	void setModel() {
-		currentPicture = "modelПодсолнух.png";
-	}
-	void updateBullet(RenderWindow& window, double time) {};
-};
-
-//Обработка для Горошка
-class PeaImage : public FlowerImage {
-	void weaponFrom() {
-		weapon = "снарядГорошек.png";
-			//Позиция вылета снаряда на картинке
-			posWeaponX = 100;
-			posWeaponY = 28;
-	}
-
-	void setSpeedDx(double speed) {
-		dx = speed;
-	}
-
-	void setDoing() {
-		doing = "Кушать";
-	}
-	void setModel() {
-		currentPicture = "modelГорошек.png";
-	}
-	void updateBullet(RenderWindow& window, double time) {
-		posWeaponX += dx * time;
-		//Загрузка новой анимации
-
-		Image bulletRender;
-		bulletRender.loadFromFile("снарядГорошек.png");
-		Texture texture;
-		texture.loadFromImage(bulletRender);
-		Sprite newSprite;
-		newSprite.setTexture(texture);
-		//Создание новых координат для пули
-		newSprite.setTextureRect(IntRect(0, 0, 40, 40));
-		newSprite.setPosition(posWeaponX, posWeaponY);
-		//dx = 0;
-		//Нарисовать эти координаты
-		window.draw(newSprite);
-	}
-};
-
-
-//Обработка для Капусты
-class CabbageImage : public FlowerImage {
-	void weaponFrom() {
-		weapon = "снарядКапуста.png";
-			//Позиция вылета снаряда на картинке
-			posWeaponX = 13;
-			posWeaponY = 20;
-	}
-
-
-	void setSpeedDx(double speed = 0.03) {
-		dx = speed;
-	}
-	void setDoing() {
-		doing = "Кушать";
-	}
-	void setModel() {
-		currentPicture = "modelКапуста.png";
-	}
-	void updateBullet(RenderWindow& window, double time) {
-		posWeaponX += dx * time;
-		//Загрузка новой анимации
-
-		Image bulletRender;
-		bulletRender.loadFromFile("снарядКапуста.png");
-		Texture texture;
-		texture.loadFromImage(bulletRender);
-		Sprite newSprite;
-		newSprite.setTexture(texture);
-		//Создание новых координат для пули
-		newSprite.setTextureRect(IntRect(0, 0, 80, 80));
-		newSprite.setPosition(posWeaponX, posWeaponY);
-		//dx = 0;
-		//Нарисовать эти координаты
-		window.draw(newSprite);
-	}
-};
-
-//Обработка для Ореха
-class NutImage : public FlowerImage {
-	void setDoing() {
-		doing = "Кушать";
-	}
-	void weaponFrom() {};
-	void setSpeedDx(double a) {};
-	void setModel() {
-		currentPicture = "modelОрех.png";
-	}
-	void updateBullet(RenderWindow& window, double time) {};
-};
-
-//Обработка для Актинии
-class ActiniaImage : public FlowerImage {
-	void weaponFrom() {
-		weapon = "сюрикен1.png";
-			//Позиция вылета снаряда на картинке
-			posWeaponX = 103;
-			posWeaponY = 28;
-	}
-
-	void setSpeedDx(double speed = 0.03) {
-		//dx = speed;
-	}
-	void setDoing() {
-		doing = "Кушать";
-	}
-	void setModel() {
-		currentPicture = "modelАктиния.png";
-	}
-	void updateBullet(RenderWindow& window, double time) {
-		posWeaponX += dx * time;
-		//Загрузка новой анимации
-
-		Image bulletRender;
-		if (posWeaponX % 2 == 0)
-		    bulletRender.loadFromFile("сюрикен1.png");
-		else
-			bulletRender.loadFromFile("сюрикен2.png");
-		Texture texture;
-		texture.loadFromImage(bulletRender);
-		Sprite newSprite;
-		newSprite.setTexture(texture);
-		//Создание новых координат для пули
-		newSprite.setTextureRect(IntRect(0, 0, 40, 40));
-		newSprite.setPosition(posWeaponX, posWeaponY);
-		//Нарисовать эти координаты
-		window.draw(newSprite);
-	}
-
-};
-
-//Обработка для бомбы
-class BombImage : public FlowerImage {
-	void setDoing() {
-		doing = "Кушать";
-	}
-	void weaponFrom() {};
-	void setSpeedDx(double a) {};
-	void setModel() {
-		currentPicture = "modelБомба.png";
-	}
-	void updateBullet(RenderWindow& window, double time) {};
-};
-
-
-
-//Интерфейс "Физика цветка" и 5 реализаций для него
-class FlowerPhysic {
-public:
-	int health;
-	int damage;
-	//true, если нужно (атаковать)
-	bool zombieInWay;
-	bool isAvialiable;
-	int weaponX;
-	Clock timeToCooldaun;
-public:
-	//Количество здоровья, урон, модель
-	virtual void setHealthPoint(int) = 0;
-	virtual void setDamagePoint(int) = 0;
-	virtual int getHealthPoint() = 0;
-	virtual int getDamage() = 0;
-	// Необходимость активироваться
-	virtual bool needToActivate(int) = 0;
-	
-
-	void ripFlower() {
-		isAvialiable = false;
-	}
-
-	bool isOnMap() {
-		return isAvialiable;
-	}
-
-	virtual ~FlowerPhysic() {}
-};
-
-//Реализации для каждого из цветков
-
-//Подсолнух нежится на солнышке
-class SunflowerPhysic : public FlowerPhysic
-{
-public:
-	void setHealthPoint(int point = 100) {
-		health = point;
-	}
-	void setDamagePoint(int point = 0) {
-		damage = point;
-	}
-	int getDamage() {
-		return damage;
-	}
-	int getHealthPoint() {
-		return health;
-	}
-	bool needToActivate(int i = 1) {
-		zombieInWay = true;
-		return zombieInWay;
-	}
-
-	virtual ~SunflowerPhysic() {}
-};
-
-//Горошек плюет горошинами (больно) 
-class PeaPhysic : public FlowerPhysic
-{
-public:
-	void setHealthPoint(int point = 150) {
-		health = point;
-	}
-	void setDamagePoint(int point = 20) {
-		damage = point;
-	}
-	int getDamage() {
-		return damage;
-	}
-	int getHealthPoint() {
-		return health;
-	}
-	bool needToActivate(int x2) {
-		//x1 - координата горошка
-		//x2 - координата зомби
-		//Если зомби правее пули, то активироваться
-		if (x2 > weaponX) {
-			zombieInWay = true;
-		}
-		return zombieInWay;
-	}
-	virtual ~PeaPhysic() {}
-};
-
-//Орех - сильный блок, его тяжело раскусить!
-class NutPhysic : public FlowerPhysic
-{
-public:
-	void setHealthPoint(int point = 150) {
-		health = point;
-	}
-	void setDamagePoint(int point = 0) {
-		damage = point;
-	}
-	int getDamage() {
-		return damage;
-	}
-	int getHealthPoint() {
-		return health;
-	}
-	bool needToActivate(int x2) {
-		//x1 - координата горошка
-		//x2 - координата зомби
-		//Если зомби правее пули, то активироваться
-		if (x2 > weaponX) {
-			zombieInWay = true;
-		}
-		return zombieInWay;
-	}
-
-	virtual ~NutPhysic() {}
-};
-
-//Капуста - не промахивается кочерыжками!
-class CabbagePhysic : public FlowerPhysic
-{
-public:
-	void setHealthPoint(int point = 100) {
-		health = point;
-	}
-	void setDamagePoint(int point = 30) {
-		damage = point;
-	}
-	int getDamage() {
-		return damage;
-	}
-	int getHealthPoint() {
-		return health;
-	}
-	bool needToActivate(int x2) {
-		//x1 - координата ореха
-		//x2 - координата зомби
-		//Если зомби правее , то активироваться
-		if (x2 < weaponX) {
-			zombieInWay = true;
-		}
-		return zombieInWay;
-	}
-	virtual ~CabbagePhysic() {}
-};
-
-//Актиния имеет сюрикены, бойся!
-class ActiniaPhysic : public FlowerPhysic
-{
-public:
-	void setHealthPoint(int point = 120) {
-		health = point;
-	}
-	void setDamagePoint(int point = 10) {
-		damage = point;
-	}
-	int getDamage() {
-		return damage;
-	}
-	int getHealthPoint() {
-		return health;
-	}
-	bool needToActivate(int x2) {
-		//x1 - координата бомбы
-		//x2 - координата зомби
-		//Если зомби левее бомбы, то активироваться
-		if (x2 < weaponX) {
-			zombieInWay = true;
-		}
-		return zombieInWay;
-	}
-	virtual ~ActiniaPhysic() {}
-};
-
-//Бомба - ты в ловушке!
-class BombPhysic : public FlowerPhysic
-{
-public:
-	void setHealthPoint(int point = 0) {
-		health = point;
-	}
-	void setDamagePoint(int point = 0) {
-		damage = point;
-	}
-	int getDamage() {
-		return damage;
-	}
-	int getHealthPoint() {
-		return health;
-	}
-	bool needToActivate(int x2) {
-		//x1 - координата сюрикена
-		//x2 - координата зомби
-		//Если зомби правее сюрикена, то активироваться
-		if (x2 > weaponX) {
-			zombieInWay = true;
-		}
-		return zombieInWay;
-	}
-
-	virtual ~BombPhysic() {}
-};
-
-//Абстрактная фабрика растений
-class FlowerFactory {
-public:
-	virtual FlowerImage* makeFlower() = 0;
-	virtual FlowerPhysic* makePhysic() = 0;
-};
-
-//Фабрика Подсолнухов возвращает Подсолнух и его Физику
-//Аналогично, для остальных растений
-class SunflowersFactory : public FlowerFactory {
-	FlowerImage* makeFlower() {
-		return new SunflowerImage();
-	}
-	FlowerPhysic* makePhysic() {
-		return new SunflowerPhysic();
-	}
-};
-
-class PeaFactory : public FlowerFactory {
-	FlowerImage* makeFlower() {
-		return new PeaImage();
-	}
-	FlowerPhysic* makePhysic() {
-		return new PeaPhysic();
-	}
-};
-
-class CabbageFactory : public FlowerFactory {
-	FlowerImage* makeFlower() {
-		return new CabbageImage();
-	}
-	FlowerPhysic* makePhysic() {
-		return new CabbagePhysic();
-	}
-};
-
-class NutFactory : public FlowerFactory {
-	FlowerImage* makeFlower() {
-		return new NutImage();
-	}
-	FlowerPhysic* makePhysic() {
-		return new NutPhysic();
-	}
-};
-
-class ActiniaFactory : public FlowerFactory {
-	FlowerImage* makeFlower() {
-		return new ActiniaImage();
-	}
-	FlowerPhysic* makePhysic() {
-		return new ActiniaPhysic();
-	}
-};
-
-class BombFactory : public FlowerFactory {
-	FlowerImage* makeFlower() {
-		return new BombImage();
-	}
-	FlowerPhysic* makePhysic() {
-		return new BombPhysic();
-	}
-};
-
-//Класс, в котором пара (Изображение, Физика)
-class FlowerPair
-{
-public:
-	FlowerImage* image;
-	FlowerPhysic* physic;
-};
-
-//Класс с заполненной парой (Изображения и физики)
-class Flower {
-public:
-	FlowerPair* createFlower(FlowerFactory& factory) {
-		FlowerPair* p = new FlowerPair;
-		p->image = factory.makeFlower();
-		p->physic = factory.makePhysic();
-		return p;
-	}
-};
-
-
-/////////////////////////////////////////////////////////
-
-//Класс "Зомби"
-class Zombie {
-public:
-	//Изменение по оси x
-	//Для зомби всегда против оси
-	float dx;
-	float dy;
-	string fileName;
-	//Помещение картинки
-	float x;
-	float y;
-	Sprite sprite;
-	//Доступность
-	bool statusAviliable;
-	//Количество жизней и урон
-	int health;
-	int damage;
-	//Текущее состояние жизни
-	bool isLive;
-	//Сейчас - кушает
-	bool isEaten;
-
-
-	//Конструктор 
-	Zombie(RenderWindow &window, int posLine) {
-		//Зомби доступно для первого взятия
-		statusAviliable = true;
-		isLive = false;
-		isEaten = false;
-		Image ZombieRender;
-		//загружаем файл для карты
-		fileName = "zombieOnPlace.png";
-		ZombieRender.loadFromFile(fileName);
-		Texture texture;
-		texture.loadFromImage(ZombieRender);
-		sprite.setTexture(texture);
-		//Случайная позиция на любом из квадратов (из 5)
-		srand(time(0));
-		x = 1100;
-		//Параллельно "тачкам"
-		y = 125 + (posLine - 1) * 110;
-		dx = -0.01;
-		sprite.setTextureRect(IntRect(0, 0, 140, 140));
-		sprite.setPosition(x, y);
-		health = 150;
-		damage = 10;
-	}
-
-	//Движение зомби
-	void update(RenderWindow &window, float time) {
-		x += dx * time;
-		//Загрузка новой анимации
-		if (fileName.find("On") != -1)
-			fileName = "zombieInRun.png";
-		else
-			fileName = "zombieOnPlace.png";
-
-		Image ZombieRender;
-		ZombieRender.loadFromFile(fileName);
-		Texture texture;
-		texture.loadFromImage(ZombieRender);
-		Sprite newSprite;
-		newSprite.setTexture(texture);
-		//Создание новых координат для зомби
-		newSprite.setTextureRect(IntRect(0, 0, 140, 140));
-		newSprite.setPosition(x, y);
-		dx = 0;
-		//Нарисовать эти координаты
-		window.draw(newSprite);
-
-	}
-
-	double myDamage() {
-		return damage;
-	}
-
-	//Сделать недоступным для повторного взятия
-	void setUnvialible() {
-		statusAviliable = false;
-	}
-
-	//Проверка на доступность
-	bool isAvialible() {
-		return statusAviliable;
-	}
-
-	//Получение урона (от цветка)
-	void getDamage(FlowerPhysic* someFlower) {
-		health -= someFlower->getDamage();
-		if (health <= 0)
-			ripZombie();
-	}
-
-	//Цветок получает урон
-	void setDamage(FlowerPhysic* someFlower) {
-		someFlower->health -= damage;
-		if (someFlower->health <= 0) {
-			someFlower->ripFlower();
-			this->isEaten = false;
-		}
-	}
-
-	//Зомби умер
-	void ripZombie() {
-		statusAviliable = false;
-	}
-
-	bool isZombieRip() {
-		return statusAviliable;
-	}
-
-	//Смена картинок при еде
-	void setNextPictureEating(RenderWindow& window) {
-		//Загрузка новой анимации
-		if (fileName.find("Ест") == -1)
-			fileName = "ЗомбиЕст.png";
-		else
-			fileName = "zombieOnPlace.png";
-
-		Image ZombieRender;
-		ZombieRender.loadFromFile(fileName);
-		Texture texture;
-		texture.loadFromImage(ZombieRender);
-		Sprite newSprite;
-		newSprite.setTexture(texture);
-		//Создание новых координат для зомби
-		newSprite.setTextureRect(IntRect(0, 0, 140, 140));
-		newSprite.setPosition(x, y);
-		dx = 0;
-		//Нарисовать эти координаты
-		window.draw(newSprite);
-	}
-};
-
-///////////////////////////////////////////
-// Класс "Тележка"
-class Car {
-public:
-	//Изменение по оси x
-	//Для машины всегда по оси
-	float dx;
-	string fileName;
-	//Помещение картинки
-	float x;
-	float y;
-	Sprite sprite;
-	bool isRunningStatus;
-
-	//Конструктор 
-	Car(RenderWindow &window, int numberCar) {
-		Image car;
-		//загружаем файл для тачки
-		car.loadFromFile("modelТачка.png");
-		Texture texture;
-		texture.loadFromImage(car);
-		sprite.setTexture(texture);
-		//Координата левого верхнего угла, ширина и высота
-		sprite.setTextureRect(IntRect(0, 0, 120, 120));
-		//В определенных квадратах
-		auto i = numberCar;
-		sprite.setPosition(190, 140 + i * 110);
-		x = 190;
-		y = 140 + i * 110;
-		dx = 0.1;
-		isRunningStatus = false;
-		window.draw(sprite);
-	}
-	//Движение машины (движение вправо)
-	void update(RenderWindow &window, float time, int num) {
-		x += dx * time;
-
-		Image car;
-		//загружаем файл для тачки
-		car.loadFromFile("modelТачка.png");
-		Texture texture;
-		texture.loadFromImage(car);
-		sprite.setTexture(texture);
-		//Координата левого верхнего угла, ширина и высота
-		sprite.setTextureRect(IntRect(0, 0, 120, 120));
-
-		//Создание новых координат для машины
-		sprite.setPosition(x, y);
-		dx = 0;
-		//Нарисовать эти координаты
-		window.draw(sprite);
-	}
-
-	bool isRun() {
-		return isRunningStatus;
-	}
-
-	//Движение машины
-	void carIsRunning(RenderWindow& window, int x1, vector<Zombie> &listZombies, vector<int> zombiesInLine, double time) {
-		for (auto i = 0; i < zombiesInLine.size(); i++) {
-			int x2 = listZombies[zombiesInLine[i]].x;
-			if ((x1 > x2)&&(x1 < 1100)) {
-				dx = 0.02;
-				update(window, time, 0);
-				listZombies[zombiesInLine[i]].isLive = false;
-				listZombies[zombiesInLine[i]].health = -1;
-				isRunningStatus = true;
-			}
-		}
-	}
-
-	void getDamage(Zombie* zombie) {
-		zombie->health -= 200;
-		if (zombie <= 0)
-			zombie->ripZombie();
-	}
-
-};
-
-
-
-//Добавить картинку с меню "Пауза"
+//Р”РѕР±Р°РІРёС‚СЊ РєР°СЂС‚РёРЅРєСѓ СЃ РјРµРЅСЋ "РџР°СѓР·Р°"
 void createMenuPause(RenderWindow &window) {
 	Image pauseButtonRender;
-	//загружаем файл для карты
-	pauseButtonRender.loadFromFile("кнопкаПауза.png");
+	//Р·Р°РіСЂСѓР¶Р°РµРј С„Р°Р№Р» РґР»СЏ РєР°СЂС‚С‹
+	pauseButtonRender.loadFromFile("РєРЅРѕРїРєР°РџР°СѓР·Р°.png");
 	Texture texture;
 	texture.loadFromImage(pauseButtonRender);
 	Sprite buttonPause;
 	buttonPause.setTexture(texture);
-	//Координата левого верхнего угла, ширина и высота
+	//РљРѕРѕСЂРґРёРЅР°С‚Р° Р»РµРІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р°, С€РёСЂРёРЅР° Рё РІС‹СЃРѕС‚Р°
 	buttonPause.setTextureRect(IntRect(0, 0, 140, 140));
-	//В определенном квадате
+	//Р’ РѕРїСЂРµРґРµР»РµРЅРЅРѕРј РєРІР°РґР°С‚Рµ
 	buttonPause.setPosition(1000, 10);
 	window.draw(buttonPause);
 }
 
-//Добавить меню с очками
+//Р”РѕР±Р°РІРёС‚СЊ РјРµРЅСЋ СЃ РѕС‡РєР°РјРё
 void createPoints(RenderWindow &window) {
 	Image pauseButtonRender;
-	//загружаем файл для карты
-	pauseButtonRender.loadFromFile("modelСолнце.png");
+	//Р·Р°РіСЂСѓР¶Р°РµРј С„Р°Р№Р» РґР»СЏ РєР°СЂС‚С‹
+	pauseButtonRender.loadFromFile("modelРЎРѕР»РЅС†Рµ.png");
 	Texture texture;
 	texture.loadFromImage(pauseButtonRender);
 	Sprite buttonPause;
 	buttonPause.setTexture(texture);
-	//Координата левого верхнего угла, ширина и высота
+	//РљРѕРѕСЂРґРёРЅР°С‚Р° Р»РµРІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р°, С€РёСЂРёРЅР° Рё РІС‹СЃРѕС‚Р°
 	buttonPause.setTextureRect(IntRect(0, 0, 140, 140));
-	//В определенном квадате
+	//Р’ РѕРїСЂРµРґРµР»РµРЅРЅРѕРј РєРІР°РґР°С‚Рµ
 	buttonPause.setPosition(500, 23);
 	window.draw(buttonPause);
 }
@@ -730,28 +44,28 @@ struct coordinats {
 
 
 void heroToField(RenderWindow &window, std::string path, coordinats temp) {
-	//Добавить условие, что клетка не должна быть занята
-	//Рисование героя
+	//Р”РѕР±Р°РІРёС‚СЊ СѓСЃР»РѕРІРёРµ, С‡С‚Рѕ РєР»РµС‚РєР° РЅРµ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ Р·Р°РЅСЏС‚Р°
+	//Р РёСЃРѕРІР°РЅРёРµ РіРµСЂРѕСЏ
 	Image hero_image;
-	//загружаем файл для карты
+	//Р·Р°РіСЂСѓР¶Р°РµРј С„Р°Р№Р» РґР»СЏ РєР°СЂС‚С‹
 	hero_image.loadFromFile(path);
 	Texture texture;
 	texture.loadFromImage(hero_image);
 	Sprite hero;
 	hero.setTexture(texture);
-	//Координата левого верхнего угла, ширина и высота
+	//РљРѕРѕСЂРґРёРЅР°С‚Р° Р»РµРІРѕРіРѕ РІРµСЂС…РЅРµРіРѕ СѓРіР»Р°, С€РёСЂРёРЅР° Рё РІС‹СЃРѕС‚Р°
 	hero.setTextureRect(IntRect(0, 0, 120, 120));
-	//В определенном квадате
+	//Р’ РѕРїСЂРµРґРµР»РµРЅРЅРѕРј РєРІР°РґР°С‚Рµ
 	hero.setPosition(temp.x,temp.y);
 	window.draw(hero);
 }
 
 
-//Отрисовка карточки героя
+//РћС‚СЂРёСЃРѕРІРєР° РєР°СЂС‚РѕС‡РєРё РіРµСЂРѕСЏ
 void createHeroCard(RenderWindow &window, std::string path, int number_hero, vector<coordinats> &list) {
-	//Рисование карточки
+	//Р РёСЃРѕРІР°РЅРёРµ РєР°СЂС‚РѕС‡РєРё
 	Image map_image;
-	//загружаем файл для карты
+	//Р·Р°РіСЂСѓР¶Р°РµРј С„Р°Р№Р» РґР»СЏ РєР°СЂС‚С‹
 	map_image.loadFromFile(path);
 	Texture map;
 	map.loadFromImage(map_image);
@@ -765,11 +79,11 @@ void createHeroCard(RenderWindow &window, std::string path, int number_hero, vec
 	window.draw(s_map);
 }
 
-//Отрисовка заднего фона
+//РћС‚СЂРёСЃРѕРІРєР° Р·Р°РґРЅРµРіРѕ С„РѕРЅР°
 void createBack(RenderWindow &window) {
-	//Рисование фона
+	//Р РёСЃРѕРІР°РЅРёРµ С„РѕРЅР°
 	Image map_image;
-	map_image.loadFromFile("задний фон.jpg");
+	map_image.loadFromFile("Р·Р°РґРЅРёР№ С„РѕРЅ.jpg");
 	Texture map;
 	map.loadFromImage(map_image);
 	Sprite s_map;
@@ -778,11 +92,11 @@ void createBack(RenderWindow &window) {
 	window.draw(s_map);
 }
 
-//Отрисовка карты
+//РћС‚СЂРёСЃРѕРІРєР° РєР°СЂС‚С‹
 void createMap(RenderWindow &window) {
-	//Рисование карты
-	Image map_image;//объект изображения для карты
-	map_image.loadFromFile("картаЦеликом.png");//загружаем файл для карты
+	//Р РёСЃРѕРІР°РЅРёРµ РєР°СЂС‚С‹
+	Image map_image;//РѕР±СЉРµРєС‚ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РґР»СЏ РєР°СЂС‚С‹
+	map_image.loadFromFile("РєР°СЂС‚Р°Р¦РµР»РёРєРѕРј.png");//Р·Р°РіСЂСѓР¶Р°РµРј С„Р°Р№Р» РґР»СЏ РєР°СЂС‚С‹
 	Texture map;
 	map.loadFromImage(map_image);
 	Sprite s_map;
@@ -791,9 +105,7 @@ void createMap(RenderWindow &window) {
 
 	window.draw(s_map);
 }
-
-
-//Попали ли курсором в карту героя
+//РџРѕРїР°Р»Рё Р»Рё РєСѓСЂСЃРѕСЂРѕРј РІ РєР°СЂС‚Сѓ РіРµСЂРѕСЏ
 bool isHitCard(coordinats temp, Vector2f click) {
     auto clickX = click.x;
     auto clickY = click.y;
@@ -801,7 +113,7 @@ bool isHitCard(coordinats temp, Vector2f click) {
 	return ((clickX < 106) && (temp.y + 62 - clickY > 0) && (clickY > temp.y));
 }
 
-//Возврат объекта "Цветок" по его названию
+//Р’РѕР·РІСЂР°С‚ РѕР±СЉРµРєС‚Р° "Р¦РІРµС‚РѕРє" РїРѕ РµРіРѕ РЅР°Р·РІР°РЅРёСЋ
 FlowerPair* callObjectSunflower(Flower play, SunflowersFactory sun_factory) {
 	FlowerPair* sunflower = play.createFlower(sun_factory);
 	sunflower->physic->setHealthPoint(100);
@@ -869,9 +181,9 @@ FlowerPair* callObjectBomb(Flower play, BombFactory bom_factory) {
 
 int main()
 {
-	//Создадим окно, n*n
+	//РЎРѕР·РґР°РґРёРј РѕРєРЅРѕ, n*n
 	RenderWindow window(VideoMode(1200, 700), "Plants Vs Zombies");
-	//Иконка игры
+	//РРєРѕРЅРєР° РёРіСЂС‹
 	Image icon;
 	if (!icon.loadFromFile("icon.png"))
 	{
@@ -880,9 +192,9 @@ int main()
 	window.setIcon(32, 32, icon.getPixelsPtr());
 	
 	///////////////////////////////////////
-	//Поле игры (5*9)
-	//Точка 137*79 - крайняя левая точка
-	//длина 41; ширина 53
+	//РџРѕР»Рµ РёРіСЂС‹ (5*9)
+	//РўРѕС‡РєР° 137*79 - РєСЂР°Р№РЅСЏСЏ Р»РµРІР°СЏ С‚РѕС‡РєР°
+	//РґР»РёРЅР° 41; С€РёСЂРёРЅР° 53
 	vector < vector<bool> > FIELD_GAME_STATUS;
 	for (auto i = 0; i < 5; i++) {
 		vector <bool> tempVector;
@@ -897,7 +209,7 @@ int main()
 
 
 
-	//Время с начала запуска игры, чтобы запускать в игру зомби
+	//Р’СЂРµРјСЏ СЃ РЅР°С‡Р°Р»Р° Р·Р°РїСѓСЃРєР° РёРіСЂС‹, С‡С‚РѕР±С‹ Р·Р°РїСѓСЃРєР°С‚СЊ РІ РёРіСЂСѓ Р·РѕРјР±Рё
 	Clock timerStart;
 	vector <int> timingsToGoZombie = { 4, 3, 2, 1, 5, 1, 1, 3, 4, 68};
 	vector <int> numberWays = {1,2,2,4,1,3,2,5,4,1};
@@ -909,23 +221,30 @@ int main()
 
 	Clock clock;
 
-	//Машины
+	//РњР°С€РёРЅС‹
 	Car carOne = Car(window, 0);
 	Car carTwo = Car(window, 1);
 	Car carThree = Car(window, 2);
 	Car carFour = Car(window, 3);
 	Car carFive = Car(window, 4);
+	CarCollection listCars;
+	listCars.push(carOne);
+	listCars.push(carTwo);
+	listCars.push(carThree);
+	listCars.push(carFour);
+	listCars.push(carFive);
+	
 
-	//Зомби
+	//Р—РѕРјР±Рё
 	vector <Zombie> zombiesList;
 	for (int i = 0; i < 10; ++i) {
 		Zombie temp = Zombie(window, numberWays[i]);
 		zombiesList.push_back(temp);
 	}
-	//Сейчас идут по карте 0 зомби
+	//РЎРµР№С‡Р°СЃ РёРґСѓС‚ РїРѕ РєР°СЂС‚Рµ 0 Р·РѕРјР±Рё
 	auto currentInRun = 0;		
-	//Если идут зомби, то начать стрелять
-    //Матрица (тут 5 дорожек)
+	//Р•СЃР»Рё РёРґСѓС‚ Р·РѕРјР±Рё, С‚Рѕ РЅР°С‡Р°С‚СЊ СЃС‚СЂРµР»СЏС‚СЊ
+    //РњР°С‚СЂРёС†Р° (С‚СѓС‚ 5 РґРѕСЂРѕР¶РµРє)
 	vector<vector<int>> numberZombieInLine(5);
 
 	for (auto i = 0; i < numberWays.size(); i++) {
@@ -947,10 +266,10 @@ int main()
 	}
 
 
-	//Растения
+	//Р Р°СЃС‚РµРЅРёСЏ
 	vector<pair<coordinats, string>> vectorFlowersToRender;
 	vector<bool> bulletIsRendering;
-	//6 фабрик под порождение растений
+	//6 С„Р°Р±СЂРёРє РїРѕРґ РїРѕСЂРѕР¶РґРµРЅРёРµ СЂР°СЃС‚РµРЅРёР№
 	Flower play;
 	SunflowersFactory sun_factory;
 	PeaFactory pea_factory;
@@ -958,7 +277,7 @@ int main()
 	NutFactory nut_factory;
 	BombFactory bomb_factory;
 	ActiniaFactory act_factory;
-	//Пули летящие
+	//РџСѓР»Рё Р»РµС‚СЏС‰РёРµ
 	std::vector<string> listBullets;
 	vector<FlowerPair*> listFlowers;
 
@@ -982,29 +301,39 @@ int main()
 				window.close();
 		}
 
-		//Создание заднего фона
+		//РЎРѕР·РґР°РЅРёРµ Р·Р°РґРЅРµРіРѕ С„РѕРЅР°
 		createBack(window);
-		vector <std::string> paths = { "Горошек.png", "Подсолнух.png", "Капуста.png", "Актиния.png", "Бомба.png", "Поу.png" };
+		vector <std::string> paths = { "Р“РѕСЂРѕС€РµРє.png", "РџРѕРґСЃРѕР»РЅСѓС….png", "РљР°РїСѓСЃС‚Р°.png", "РђРєС‚РёРЅРёСЏ.png", "Р‘РѕРјР±Р°.png", "РџРѕСѓ.png" };
 		vector <coordinats> placeCards;
-		//Рисование карточки героев
+		//Р РёСЃРѕРІР°РЅРёРµ РєР°СЂС‚РѕС‡РєРё РіРµСЂРѕРµРІ
 		for (int i = 0; i < 6; i++) {
 			std::string path = "card" + paths[i];
 			auto number_hero = i;
 			createHeroCard(window, path, number_hero + 1, placeCards);
 		}
-		//Сооздание карты
+		//РЎРѕРѕР·РґР°РЅРёРµ РєР°СЂС‚С‹
 		createMap(window);
-		//Создание кнопки пауза
+		//РЎРѕР·РґР°РЅРёРµ РєРЅРѕРїРєРё РїР°СѓР·Р°
 		createMenuPause(window);
-		//Создание окна с "Солнышками"
+		//РЎРѕР·РґР°РЅРёРµ РѕРєРЅР° СЃ "РЎРѕР»РЅС‹С€РєР°РјРё"
 		createPoints(window);
 
-		//Обновление телег
-		carOne.dx = 0;
-		carTwo.dx = 0;
-		carThree.dx = 0;
-		carFour.dx = 0;
-		carFive.dx = 0;
+		//РћР±РЅРѕРІР»РµРЅРёРµ С‚РµР»РµРі
+		for (int i = 0; i<5; i++) {
+			listCars.items[i].dx = 0;
+		}
+		
+
+		CarIterator it(listCars);
+		int q = 0;
+		for (; it(); ++it) {
+			if (!(*it).isRun())
+				(*it).update(window, time, q);
+			q++;
+		}
+		
+
+		/*
 		if (!carOne.isRun())
 		    carOne.update(window, time, 0);
 		if (!carTwo.isRun())
@@ -1014,11 +343,11 @@ int main()
 		if (!carFour.isRun())
 		    carFour.update(window, time, 3);
 		if (!carFive.isRun())
-		    carFive.update(window, time, 4);
+		    carFive.update(window, time, 4);*/
 		
-		//Обновление Зомби
+		//РћР±РЅРѕРІР»РµРЅРёРµ Р—РѕРјР±Рё
 		int secondsFromStart = timerStart.getElapsedTime().asSeconds();
-		//Если подошло время выпускать зомби, то выпустить его
+		//Р•СЃР»Рё РїРѕРґРѕС€Р»Рѕ РІСЂРµРјСЏ РІС‹РїСѓСЃРєР°С‚СЊ Р·РѕРјР±Рё, С‚Рѕ РІС‹РїСѓСЃС‚РёС‚СЊ РµРіРѕ
 		if (currentInRun != 10) {
 			if ((secondsFromStart > timingsToGoZombie[currentInRun]) && (currentInRun <= 9)) {
 				zombiesList[currentInRun].dx = -0.01;
@@ -1030,7 +359,7 @@ int main()
 				timerStart.restart();
 			}
 		}
-		//Перерисовка на каждом шаге тех, кто уже идет (и не ест)
+		//РџРµСЂРµСЂРёСЃРѕРІРєР° РЅР° РєР°Р¶РґРѕРј С€Р°РіРµ С‚РµС…, РєС‚Рѕ СѓР¶Рµ РёРґРµС‚ (Рё РЅРµ РµСЃС‚)
 		for (int i = 0; i < zombiesList.size(); ++i) {
 			if ((zombiesList[i].statusAviliable == false) && (zombiesList[i].isEaten == false)) {
 				if (zombiesList[i].isLive == false) 
@@ -1040,22 +369,22 @@ int main()
 			}
 		}
 	
-        //Перерисовка растений на карте
+        //РџРµСЂРµСЂРёСЃРѕРІРєР° СЂР°СЃС‚РµРЅРёР№ РЅР° РєР°СЂС‚Рµ
 		for (int i = 0; i < vectorFlowersToRender.size(); i++) {
 			if (listFlowers[i]->physic->health > 0)
 			    heroToField(window, vectorFlowersToRender[i].second, vectorFlowersToRender[i].first);
 		}
 
 		////////////////////////////////////////////////////////
-		//Атака растений//
+		//РђС‚Р°РєР° СЂР°СЃС‚РµРЅРёР№//
 		bool needToShoot = true;
-		//Цикл по всем линиям (их 5)
+		//Р¦РёРєР» РїРѕ РІСЃРµРј Р»РёРЅРёСЏРј (РёС… 5)
 		for (auto k = 0; k < 5; k++) {
-			//Если хотя бы один из этих зомби идет по линии, то начать стрелять
+			//Р•СЃР»Рё С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ РёР· СЌС‚РёС… Р·РѕРјР±Рё РёРґРµС‚ РїРѕ Р»РёРЅРёРё, С‚Рѕ РЅР°С‡Р°С‚СЊ СЃС‚СЂРµР»СЏС‚СЊ
 			for (auto i = 0; i < numberZombieInLine[k].size(); ++i) {
-				//Зомби должен пойти, чтобы цветок активировался
+				//Р—РѕРјР±Рё РґРѕР»Р¶РµРЅ РїРѕР№С‚Рё, С‡С‚РѕР±С‹ С†РІРµС‚РѕРє Р°РєС‚РёРІРёСЂРѕРІР°Р»СЃСЏ
 				if ((zombiesList[numberZombieInLine[k][i]].statusAviliable == false)&&(zombiesList[numberZombieInLine[k][i]].isLive == true)) {
-					//Найдем все стоящие на этой линии растения и заставим их стрелять
+					//РќР°Р№РґРµРј РІСЃРµ СЃС‚РѕСЏС‰РёРµ РЅР° СЌС‚РѕР№ Р»РёРЅРёРё СЂР°СЃС‚РµРЅРёСЏ Рё Р·Р°СЃС‚Р°РІРёРј РёС… СЃС‚СЂРµР»СЏС‚СЊ
 					for (int j = 0; j < vectorFlowersToRender.size(); j++) {
 						if (listFlowers[j]->image->reprinting == false) {
 							coordinats tempCoordinats = vectorFlowersToRender[j].first;
@@ -1064,7 +393,7 @@ int main()
 							int yLeft = 162;
 							int CageX = (tempCoordinats.x+20 - xHigh) / 92;
 							int CageY = (tempCoordinats.y+20 - yLeft) / 107;
-							//Если растение в этой строке, то заставить его стрелять
+							//Р•СЃР»Рё СЂР°СЃС‚РµРЅРёРµ РІ СЌС‚РѕР№ СЃС‚СЂРѕРєРµ, С‚Рѕ Р·Р°СЃС‚Р°РІРёС‚СЊ РµРіРѕ СЃС‚СЂРµР»СЏС‚СЊ
 							if (CageY == k) {
 								listFlowers[j]->physic->zombieInWay = true;
 								listFlowers[j]->image->posWeaponX = 296 + CageX * 92 - 20 + 100;
@@ -1079,17 +408,17 @@ int main()
 			}
 		
 		///////////////////////////////////////////////////////
-		//Все растения (не все) из живых спискаРастений должны стрелять, если на них нападает зомби
+		//Р’СЃРµ СЂР°СЃС‚РµРЅРёСЏ (РЅРµ РІСЃРµ) РёР· Р¶РёРІС‹С… СЃРїРёСЃРєР°Р Р°СЃС‚РµРЅРёР№ РґРѕР»Р¶РЅС‹ СЃС‚СЂРµР»СЏС‚СЊ, РµСЃР»Рё РЅР° РЅРёС… РЅР°РїР°РґР°РµС‚ Р·РѕРјР±Рё
 		for (int i=0; i < listFlowers.size(); ++i) {
 			if ((listFlowers[i]->physic->zombieInWay == true)&&((listFlowers[i]->physic->health > 0))) {
 				bulletIsRendering[i] = true;
 			}
 		}
 
-		//Перерисовать все пули
+		//РџРµСЂРµСЂРёСЃРѕРІР°С‚СЊ РІСЃРµ РїСѓР»Рё
 		for (int i = 0; i < bulletIsRendering.size(); ++i) {
 			if (bulletIsRendering[i]) {
-				if ((listFlowers[i]->physic->health > 0) && (listFlowers[i]->image->currentPicture != "modelПодсолнух.png") && (listFlowers[i]->image->currentPicture != "modelПоу.png") && (listFlowers[i]->image->currentPicture != "modelБомба.png")) {
+				if ((listFlowers[i]->physic->health > 0) && (listFlowers[i]->image->currentPicture != "modelРџРѕРґСЃРѕР»РЅСѓС….png") && (listFlowers[i]->image->currentPicture != "modelРџРѕСѓ.png") && (listFlowers[i]->image->currentPicture != "modelР‘РѕРјР±Р°.png")) {
 					listFlowers[i]->image->dx = 0.1;
 					listFlowers[i]->image->updateBullet(window, time);
 					}
@@ -1097,29 +426,29 @@ int main()
 			}
 	
 
-		//Нанесем урон всем зомби (урон всем растениям)
+		//РќР°РЅРµСЃРµРј СѓСЂРѕРЅ РІСЃРµРј Р·РѕРјР±Рё (СѓСЂРѕРЅ РІСЃРµРј СЂР°СЃС‚РµРЅРёСЏРј)
 		for (int i = 0; i < 5; ++i) {
 			for (int k = 0; k < numberZombieInLine[i].size(); ++k){
-			//Это живой зомби
+			//Р­С‚Рѕ Р¶РёРІРѕР№ Р·РѕРјР±Рё
 				if (zombiesList[numberZombieInLine[i][k]].isLive == true) {
 					for (int j = 0; j < listFlowers.size(); j++)
 						if ((zombiesList[numberZombieInLine[i][k]].x < listFlowers[j]->image->posWeaponX) && ((listFlowers[j]->physic->health > 0))) {
-							//Линии должны совпадать
+							//Р›РёРЅРёРё РґРѕР»Р¶РЅС‹ СЃРѕРІРїР°РґР°С‚СЊ
 							if (((vectorFlowersToRender[j].first.y-142)/107 == i)) {
-									//Получить урон от растения
+									//РџРѕР»СѓС‡РёС‚СЊ СѓСЂРѕРЅ РѕС‚ СЂР°СЃС‚РµРЅРёСЏ
 									zombiesList[numberZombieInLine[i][k]].getDamage(listFlowers[j]->physic);
 									if (zombiesList[numberZombieInLine[i][k]].health <= 0) {
 										zombiesList[numberZombieInLine[i][k]].isLive = false;
-										//Прекратить стрельбу при убийстве
+										//РџСЂРµРєСЂР°С‚РёС‚СЊ СЃС‚СЂРµР»СЊР±Сѓ РїСЂРё СѓР±РёР№СЃС‚РІРµ
 										listFlowers[j]->physic->zombieInWay = false;
 								}
 								listFlowers[j]->image->reprinting = false;
-								//Если зомби подошло к растению, то может его атаковать
+								//Р•СЃР»Рё Р·РѕРјР±Рё РїРѕРґРѕС€Р»Рѕ Рє СЂР°СЃС‚РµРЅРёСЋ, С‚Рѕ РјРѕР¶РµС‚ РµРіРѕ Р°С‚Р°РєРѕРІР°С‚СЊ
 								if (zombiesList[numberZombieInLine[i][k]].x <= vectorFlowersToRender[j].first.x + 60) {
 									zombiesList[numberZombieInLine[i][k]].isEaten = true;
 									zombiesList[numberZombieInLine[i][k]].setNextPictureEating(window);
 									zombiesList[numberZombieInLine[i][k]].setDamage(listFlowers[j]->physic);
-									//В след раз не перерисуется при смерти
+									//Р’ СЃР»РµРґ СЂР°Р· РЅРµ РїРµСЂРµСЂРёСЃСѓРµС‚СЃСЏ РїСЂРё СЃРјРµСЂС‚Рё
 								}
 							}
 						}
@@ -1128,23 +457,19 @@ int main()
 		}
 
 
-		//Если прямоугольник тачки пересекся с прямоугольником зомби, то его необходимо переехать
-		//Реализовать для всех!
-		int x1 = carOne.x + 32;
-		int x2 = carTwo.x + 32;
-		int x3 = carThree.x + 32;
-		int x4 = carFour.x + 32;
-		int x5 = carFive.x + 32;
-		carOne.carIsRunning(window, x1, zombiesList, numberZombieInLine[0], time);
-		carTwo.carIsRunning(window, x2, zombiesList, numberZombieInLine[1], time);
-		carThree.carIsRunning(window, x3, zombiesList, numberZombieInLine[2], time);
-		carFour.carIsRunning(window, x4, zombiesList, numberZombieInLine[3], time);
-		carFive.carIsRunning(window, x5, zombiesList, numberZombieInLine[4], time);
+		//Р•СЃР»Рё РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє С‚Р°С‡РєРё РїРµСЂРµСЃРµРєСЃСЏ СЃ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРј Р·РѕРјР±Рё, С‚Рѕ РµРіРѕ РЅРµРѕР±С…РѕРґРёРјРѕ РїРµСЂРµРµС…Р°С‚СЊ
+		//Р РµР°Р»РёР·РѕРІР°С‚СЊ РґР»СЏ РІСЃРµС…!
+
+		for (int i = 0; i < 5; i++) {
+			int x1 = listCars.items[i].x + 32;
+			listCars.items[i].carIsRunning(window, x1, zombiesList, numberZombieInLine[i], time);
+		}
+
 
 
 		//////////////////////////////////////////////////////////
-		//Считаем позицию мыши при нажатии левой кнопки
-		//Выберем определенную картинку
+		//РЎС‡РёС‚Р°РµРј РїРѕР·РёС†РёСЋ РјС‹С€Рё РїСЂРё РЅР°Р¶Р°С‚РёРё Р»РµРІРѕР№ РєРЅРѕРїРєРё
+		//Р’С‹Р±РµСЂРµРј РѕРїСЂРµРґРµР»РµРЅРЅСѓСЋ РєР°СЂС‚РёРЅРєСѓ
 		bool tempBool = true;
 		if (!heroIsReadyToBeStandToFeld) {
 			Vector2i pixelPos = Mouse::getPosition(window);
@@ -1156,9 +481,9 @@ int main()
 						for (auto i = 0; i < 6; i++)
 						{
 							if (isHitCard(placeCards[i], pos)) {
-								//Выбрать карточку
+								//Р’С‹Р±СЂР°С‚СЊ РєР°СЂС‚РѕС‡РєСѓ
 								heroPath = paths[i];
-								//Запретить заходить сюда при след отрисовке
+								//Р—Р°РїСЂРµС‚РёС‚СЊ Р·Р°С…РѕРґРёС‚СЊ СЃСЋРґР° РїСЂРё СЃР»РµРґ РѕС‚СЂРёСЃРѕРІРєРµ
 								heroIsReadyToBeStandToFeld = true;
 								tempBool = false;
 								break;
@@ -1172,7 +497,7 @@ int main()
 		/////////////////////////////////////////////////////
 
 
-		//Событие поставить героя на поле
+		//РЎРѕР±С‹С‚РёРµ РїРѕСЃС‚Р°РІРёС‚СЊ РіРµСЂРѕСЏ РЅР° РїРѕР»Рµ
 		if (heroIsReadyToBeStandToFeld) {
 			Vector2i fieldPos = Mouse::getPosition(window);
 			Vector2f posField = window.mapPixelToCoords(fieldPos);
@@ -1180,62 +505,62 @@ int main()
 			while (window.pollEvent(eventToField)) {
 				if (eventToField.type == Event::MouseButtonPressed)
 					if (eventToField.key.code == Mouse::Left) {
-						//Определяем клетку
+						//РћРїСЂРµРґРµР»СЏРµРј РєР»РµС‚РєСѓ
 						int xStart = 296;
 						int yStart = 162;
 						int CageX = (posField.x - xStart) / 92;
 						int CageY = (posField.y - yStart) / 107;
-						//Нельзя выйти за пределы карты
+						//РќРµР»СЊР·СЏ РІС‹Р№С‚Рё Р·Р° РїСЂРµРґРµР»С‹ РєР°СЂС‚С‹
 						if (posField.x > 1128) break;
 						if (FIELD_GAME_STATUS[CageY][CageX] == false)
 							break;
 						else
 						{
-							//Вставить в центр клетки с небольшим смещением влево
+							//Р’СЃС‚Р°РІРёС‚СЊ РІ С†РµРЅС‚СЂ РєР»РµС‚РєРё СЃ РЅРµР±РѕР»СЊС€РёРј СЃРјРµС‰РµРЅРёРµРј РІР»РµРІРѕ
 							coordinats temp;
 							temp.x = 296 + CageX * 92 - 20;
 							temp.y = 162 + CageY * 107 -20;
-							if (heroPath == "Капуста.png")
+							if (heroPath == "РљР°РїСѓСЃС‚Р°.png")
 								temp.x -= 15;
 							heroToField(window, "model"+heroPath, temp);
 							pair<coordinats, string> tempPair(temp, "model" + heroPath);
 							FlowerPair* x;
-							if (heroPath == "Подсолнух.png") {
+							if (heroPath == "РџРѕРґСЃРѕР»РЅСѓС….png") {
 								x = callObjectSunflower(play, sun_factory);
 								if (balance - 50 < 0) {
 									heroIsReadyToBeStandToFeld = false; break;
 								}
 								balance -= 50;
 							}
-							if (heroPath == "Капуста.png") {
+							if (heroPath == "РљР°РїСѓСЃС‚Р°.png") {
 								x = callObjectCabbage(play, cab_factory);
 								if (balance - 100 < 0) {
 									heroIsReadyToBeStandToFeld = false; break;
 								}
 								balance -= 100;
 							}
-							if (heroPath == "Поу.png") {
+							if (heroPath == "РџРѕСѓ.png") {
 								x = callObjectNut(play, nut_factory);
 								if (balance - 50 < 0) {
 									heroIsReadyToBeStandToFeld = false; break;
 								}
 								balance -= 50;
 							}
-							if (heroPath == "Горошек.png") {
+							if (heroPath == "Р“РѕСЂРѕС€РµРє.png") {
 								x = callObjectPea(play, pea_factory);
 								if (balance - 100 < 0) {
 									heroIsReadyToBeStandToFeld = false; break;
 								}
 								balance -= 100;
 							}
-							if (heroPath == "Бомба.png") {
+							if (heroPath == "Р‘РѕРјР±Р°.png") {
 								x = callObjectBomb(play, bomb_factory);
 								if (balance - 25 < 0) {
 									heroIsReadyToBeStandToFeld = false; break;
 								}
 								balance -= 25;
 							}
-							if (heroPath == "Актиния.png") {
+							if (heroPath == "РђРєС‚РёРЅРёСЏ.png") {
 								x = callObjectActinia(play, act_factory);
 								if (balance - 175 < 0) {
 									heroIsReadyToBeStandToFeld = false; break;
@@ -1246,7 +571,7 @@ int main()
 							vectorFlowersToRender.push_back(tempPair);
 							listFlowers.push_back(x);
 							bulletIsRendering.push_back(false);
-							//Герой уже поставлен
+							//Р“РµСЂРѕР№ СѓР¶Рµ РїРѕСЃС‚Р°РІР»РµРЅ
 							heroIsReadyToBeStandToFeld = false;
 							break;
 						}
@@ -1254,8 +579,8 @@ int main()
 			}
 		}
 		
-		//Покажем баланс на счету
-		//Рисовать от (600; 45)
+		//РџРѕРєР°Р¶РµРј Р±Р°Р»Р°РЅСЃ РЅР° СЃС‡РµС‚Сѓ
+		//Р РёСЃРѕРІР°С‚СЊ РѕС‚ (600; 45)
 		string sumString = std::to_string(balance);
 		int startX = 600;
 		int startY = 45;
@@ -1291,7 +616,7 @@ int main()
 			if (sumString[i] == '9') {
 				filename = "9.png";
 			}
-			//Рисование цифр
+			//Р РёСЃРѕРІР°РЅРёРµ С†РёС„СЂ
 			Image number;
 			number.loadFromFile(filename);
 			Texture map;
@@ -1307,23 +632,23 @@ int main()
 		//////////////////////////////////////////////////////////
 		bool isNext = true;
 		string gameOverSprite;
-		//Если хотя бы один из зомби зашел на плацдарм, мы проиграли
+		//Р•СЃР»Рё С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ РёР· Р·РѕРјР±Рё Р·Р°С€РµР» РЅР° РїР»Р°С†РґР°СЂРј, РјС‹ РїСЂРѕРёРіСЂР°Р»Рё
 		for (auto i = 0; i < zombiesList.size(); i++) {
 			if (zombiesList[i].x < 195) {
-				//Рисование картинки поражения
+				//Р РёСЃРѕРІР°РЅРёРµ РєР°СЂС‚РёРЅРєРё РїРѕСЂР°Р¶РµРЅРёСЏ
 				Image mapLose;
-				mapLose.loadFromFile("Проигрыш.png");
+				mapLose.loadFromFile("РџСЂРѕРёРіСЂС‹С€.png");
 				Texture map;
 				map.loadFromImage(mapLose);
 				Sprite loser;
 				loser.setTexture(map);
-				//В полный экран
+				//Р’ РїРѕР»РЅС‹Р№ СЌРєСЂР°РЅ
 				loser.setPosition(0, 0);
 				window.draw(loser);
 			}
 		}
 		///////////////////////////////////////////////////////////
-		//Отметим победу
+		//РћС‚РјРµС‚РёРј РїРѕР±РµРґСѓ
 		bool flag = true;
 		int i = 0;
 		for (i; i < zombiesList.size(); ++i) {
@@ -1332,23 +657,20 @@ int main()
 		}
 		
 		if (i == zombiesList.size()) {
-			//Рисование картинки победы
+			//Р РёСЃРѕРІР°РЅРёРµ РєР°СЂС‚РёРЅРєРё РїРѕР±РµРґС‹
 			Image mapWin;
-			mapWin.loadFromFile("Победа.jpg");
+			mapWin.loadFromFile("РџРѕР±РµРґР°.jpg");
 			Texture map;
 			map.loadFromImage(mapWin);
 			Sprite winner;
 			winner.setTexture(map);
-			//В полный экран
+			//Р’ РїРѕР»РЅС‹Р№ СЌРєСЂР°РЅ
 			winner.setPosition(0, 0);
 			window.draw(winner);
 		}
 		//////////////////////////////////////////////////////////
-
 		window.setSize(sf::Vector2u(550, 340));
 		window.display();
 	}
-
 	return 0;
-
 }
